@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(py --version)",
+      "Bash(cmd.exe /c \"python --version\")",
+      "Bash(cmd.exe /c \"where python && python --version\")",
+      "Bash(cmd.exe /c python --version)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(powershell.exe -Command \"py --version\")",
+      "Bash(powershell.exe -Command \"Get-Command py -ErrorAction SilentlyContinue\")"
+    ]
+  }
+}

@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ניהול מערכת - מעקב שעות</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+  <style>
+    body { background: #f0f4f8; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+    .card { border: none; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+    .card-header { border-radius: 16px 16px 0 0 !important; }
+    #login-card { max-width: 420px; margin: 80px auto; }
+    .pin-input { letter-spacing: .5em; font-size: 1.4rem; text-align: center; }
+    .btn-xl { padding: .75rem 2rem; font-size: 1.1rem; font-weight: 600; }
+    .nav-pills .nav-link { color: #495057; font-weight: 500; border-radius: 10px; }
+    .nav-pills .nav-link.active { font-weight: 700; }
+    .stat-card { border-radius: 12px; padding: 1rem 1.5rem; }
+    table th { font-weight: 600; white-space: nowrap; }
+    .action-btn { padding: .2rem .5rem; font-size: .8rem; }
+    .modal-header { border-radius: 16px 16px 0 0; }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-dark bg-dark">
+  <div class="container-fluid px-3">
+    <span class="navbar-brand fw-bold">
+      <i class="bi bi-shield-lock me-2"></i>לוח ניהול
+    </span>
+    <div class="d-flex align-items-center gap-2 ms-auto">
+      <a href="/" class="btn btn-outline-light btn-sm">
+        <i class="bi bi-arrow-right me-1"></i> חזור
+      </a>
+      <button class="btn btn-outline-danger btn-sm d-none" id="btn-logout" onclick="logout()">
+        <i class="bi bi-box-arrow-right"></i> יציאה
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- LOGIN -->
+<div id="section-login" class="container">
+  <div id="login-card" class="card p-4">
+    <div class="text-center mb-4">
+      <i class="bi bi-shield-lock-fill" style="font-size:3rem;color:#212529"></i>
+      <h4 class="mt-2 fw-bold">כניסת מנהל</h4>
+    </div>
+    <div id="login-error" class="alert alert-danger d-none"></div>
+    <div class="mb-3">
+      <label class="form-label fw-semibold">שם משתמש</label>
+      <select id="sel-employee" class="form-select form-select-lg">
+        <option value="">-- בחר --</option>
+      </select>
+    </div>
+    <div class="mb-4">
+      <label class="form-label fw-semibold">קוד PIN</label>
+      <input type="password" id="inp-pin" class="form-control form-control-lg pin-input"
+             maxlength="4" inputmode="numeric" placeholder="••••" />
+    </div>
+    <button class="btn btn-dark btn-xl w-100" onclick="doLogin()">
+      <i class="bi bi-box-arrow-in-right me-1"></i> כניסה
+    </button>
+  </div>
+</div>
+
+<!-- ADMIN DASHBOARD -->
+<div id="section-admin" class="container-fluid py-4 px-3 px-md-4 d-none">
+
+  <h5 class="fw-bold mb-3 text-secondary">
+    <i class="bi bi-speedometer2 me-1 text-dark"></i> לוח הניהול
+  </h5>
+
+  <!-- Nav Pills -->
+  <ul class="nav nav-pills mb-4 flex-wrap gap-1">
+    <li class="nav-item">
+      <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-reports" onclick="loadReports()">
+        <i class="bi bi-bar-chart me-1"></i> דוחות
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-employees" onclick="loadAdminEmployees()">
+        <i class="bi bi-people me-1"></i> עובדים
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tab-clients" onclick="loadAdminClients()">
+        <i class="bi bi-building me-1"></i> לקוחות
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+
+    <!-- TAB: REPORTS -->
+    <div class="tab-pane fade show active" id="tab-reports">
+      <!-- Filters -->
+      <div class="card p-3 mb-3">
+        <div class="row g-2 align-items-end">
+          <div class="col-6 col-md-3">
+            <label class="form-label fw-semibold small mb-1">מתאריך</label>
+            <input type="date" id="f-date-from" class="form-control form-control-sm" />
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label fw-semibold small mb-1">עד תאריך</label>
+            <input type="date" id="f-date-to" class="form-control form-control-sm" />
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label fw-semibold small mb-1">עובד</label>
+            <select id="f-employee" class="form-select form-select-sm">
+              <option value="">כולם</option>
+            </select>
+          </div>
+          <div class="col-6 col-md-2">
+            <label class="form-label fw-semibold small mb-1">לקוח</label>
+            <select id="f-client" class="form-select form-select-sm">
+              <option value="">כולם</option>
+            </select>
+          </div>
+          <div class="col-12 col-md-2 d-flex gap-1">
+            <button class="btn btn-primary btn-sm flex-fill" onclick="loadReports()">
+              <i class="bi bi-search me-1"></i> סנן
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="clearFilters()">
+              <i class="bi bi-x-lg"></i>
+            </button>
+          </div>
+        </div>
+        <!-- Quick ranges -->
+        <div class="mt-2 d-flex flex-wrap gap-1">
+          <button class="btn btn-outline-secondary btn-sm" onclick="setRange('this_month')">החודש</button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="setRange('last_month')">חודש שעבר</button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="setRange('this_week')">השבוע</button>
+          <button class="btn btn-outline-secondary btn-sm" onclick="setRange('last_7')">7 ימים אחרונים</button>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="row g-2 mb-3" id="summary-row">
+        <div class="col-6 col-md-3">
+          <div class="card stat-card bg-primary text-white text-center">
+            <div class="fw-bold fs-4" id="stat-total-hours">—</div>
+            <small>סה"כ שעות</small>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="card stat-card bg-success text-white text-center">
+            <div class="fw-bold fs-4" id="stat-total-logs">—</div>
+            <small>מספר דיווחים</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="card p-0 overflow-hidden">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 px-3">
+          <span class="fw-bold"><i class="bi bi-table me-1"></i>טבלת דיווחים</span>
+          <button class="btn btn-success btn-sm" onclick="exportCSV()">
+            <i class="bi bi-download me-1"></i> ייצוא CSV
+          </button>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 table-sm">
+            <thead class="table-dark">
+              <tr>
+                <th>תאריך</th>
+                <th>עובד</th>
+                <th>לקוח</th>
+                <th>תיאור</th>
+                <th>שעה</th>
+                <th>משך</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="report-tbody">
+              <tr><td colspan="7" class="text-center text-muted py-4">לחץ "סנן" לטעינת דוחות</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: EMPLOYEES -->
+    <div class="tab-pane fade" id="tab-employees">
+      <div class="card p-0 overflow-hidden">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 px-3">
+          <span class="fw-bold"><i class="bi bi-people-fill me-1 text-primary"></i>ניהול עובדים</span>
+          <button class="btn btn-primary btn-sm" onclick="openEmpModal()">
+            <i class="bi bi-plus-lg me-1"></i> עובד חדש
+          </button>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr><th>#</th><th>שם</th><th>PIN</th><th>פעולות</th></tr>
+            </thead>
+            <tbody id="emp-tbody">
+              <tr><td colspan="4" class="text-center text-muted py-4">טוען...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: CLIENTS -->
+    <div class="tab-pane fade" id="tab-clients">
+      <div class="card p-0 overflow-hidden">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 px-3">
+          <span class="fw-bold"><i class="bi bi-building-fill me-1 text-success"></i>ניהול לקוחות</span>
+          <button class="btn btn-success btn-sm" onclick="openClientModal()">
+            <i class="bi bi-plus-lg me-1"></i> לקוח חדש
+          </button>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr><th>#</th><th>שם לקוח</th><th>סטטוס</th><th>פעולות</th></tr>
+            </thead>
+            <tbody id="client-tbody">
+              <tr><td colspan="4" class="text-center text-muted py-4">טוען...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end tab-content -->
+</div>
+
+<!-- ── EMPLOYEE MODAL ─────────────────────────────────────────────────────── -->
+<div class="modal fade" id="empModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:16px;border:none">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="empModalTitle">עובד חדש</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div id="emp-modal-error" class="alert alert-danger d-none"></div>
+        <input type="hidden" id="emp-edit-id" />
+        <div class="mb-3">
+          <label class="form-label fw-semibold">שם עובד <span class="text-danger">*</span></label>
+          <input type="text" id="emp-name" class="form-control form-control-lg" placeholder="שם מלא" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">PIN (4 ספרות) <span class="text-danger">*</span></label>
+          <input type="text" id="emp-pin" class="form-control form-control-lg pin-input"
+                 maxlength="4" inputmode="numeric" placeholder="••••" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">ביטול</button>
+        <button class="btn btn-primary px-4" onclick="saveEmployee()">
+          <i class="bi bi-check-lg me-1"></i> שמור
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CLIENT MODAL ───────────────────────────────────────────────────────── -->
+<div class="modal fade" id="clientModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="border-radius:16px;border:none">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title" id="clientModalTitle">לקוח חדש</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div id="client-modal-error" class="alert alert-danger d-none"></div>
+        <input type="hidden" id="client-edit-id" />
+        <div class="mb-3">
+          <label class="form-label fw-semibold">שם לקוח <span class="text-danger">*</span></label>
+          <input type="text" id="client-name" class="form-control form-control-lg" placeholder="שם החברה / לקוח" />
+        </div>
+        <div class="form-check form-switch mb-3" id="client-active-wrap" style="display:none!important">
+          <input class="form-check-input" type="checkbox" id="client-active" checked />
+          <label class="form-check-label fw-semibold" for="client-active">לקוח פעיל</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">ביטול</button>
+        <button class="btn btn-success px-4" onclick="saveClient()">
+          <i class="bi bi-check-lg me-1"></i> שמור
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const empModal = new bootstrap.Modal(document.getElementById('empModal'));
+  const clientModal = new bootstrap.Modal(document.getElementById('clientModal'));
+
+  // ── Init ────────────────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadAllEmployeesForLogin();
+    const me = await fetch('/api/me').then(r => r.json());
+    if (me.logged_in && me.is_admin) {
+      showAdminDashboard();
+      await Promise.all([loadFilterLists(), loadReports()]);
+    }
+    document.getElementById('inp-pin').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+  });
+
+  // ── Auth ────────────────────────────────────────────────────────────────────
+  async function loadAllEmployeesForLogin() {
+    const res = await fetch('/api/employees');
+    const emps = await res.json();
+    const sel = document.getElementById('sel-employee');
+    // Also add Admin option — we'll fetch all including admin via a trick:
+    // Just show a fixed "Admin" entry; actual validation is server-side
+    sel.innerHTML = '<option value="">-- בחר --</option>';
+    // We include a static Admin option with id=0 as placeholder; server will validate
+    sel.innerHTML += '<option value="admin_lookup">מנהל (Admin)</option>';
+    emps.forEach(e => {
+      sel.innerHTML += `<option value="${e.id}">${e.name}</option>`;
+    });
+  }
+
+  async function doLogin() {
+    const selVal = document.getElementById('sel-employee').value;
+    const pin = document.getElementById('inp-pin').value.trim();
+    const errEl = document.getElementById('login-error');
+    errEl.classList.add('d-none');
+    if (!selVal || !pin) { showLoginError('יש לבחור משתמש ולהזין PIN'); return; }
+
+    // If admin_lookup, we need to find the admin employee id
+    let empId = selVal;
+    if (selVal === 'admin_lookup') {
+      // Try all employees including admin — fetch admin specifically
+      const allRes = await fetch('/api/employees').then(r => r.json());
+      // We need to log in as admin; use a special endpoint behavior:
+      // The admin has is_admin=True. We'll pass id=0 as a signal the backend ignores,
+      // so instead just iterate and find via login attempt.
+      // Better: expose a minimal admin-only route. For simplicity, brute-check PIN against admin.
+      // We send employee_id=-1 as a special "admin" signal.
+      empId = -1;
+    }
+
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({employee_id: parseInt(empId), pin})
+    });
+    const data = await res.json();
+    if (!res.ok) { showLoginError(data.error); return; }
+    if (!data.is_admin) { showLoginError('משתמש זה אינו מנהל'); return; }
+    showAdminDashboard();
+    await Promise.all([loadFilterLists(), loadReports()]);
+  }
+
+  function showLoginError(msg) {
+    const el = document.getElementById('login-error');
+    el.textContent = msg; el.classList.remove('d-none');
+  }
+
+  function showAdminDashboard() {
+    document.getElementById('section-login').classList.add('d-none');
+    document.getElementById('section-admin').classList.remove('d-none');
+    document.getElementById('btn-logout').classList.remove('d-none');
+  }
+
+  async function logout() {
+    await fetch('/api/logout', {method: 'POST'});
+    location.reload();
+  }
+
+  // ── Filters ─────────────────────────────────────────────────────────────────
+  async function loadFilterLists() {
+    const [emps, clients] = await Promise.all([
+      fetch('/api/admin/employees').then(r => r.json()),
+      fetch('/api/admin/clients').then(r => r.json())
+    ]);
+    const fEmp = document.getElementById('f-employee');
+    fEmp.innerHTML = '<option value="">כולם</option>';
+    emps.forEach(e => fEmp.innerHTML += `<option value="${e.id}">${e.name}</option>`);
+
+    const fClient = document.getElementById('f-client');
+    fClient.innerHTML = '<option value="">כולם</option>';
+    clients.forEach(c => fClient.innerHTML += `<option value="${c.id}">${c.name}</option>`);
+  }
+
+  function setRange(type) {
+    const now = new Date();
+    let from, to;
+    if (type === 'this_month') {
+      from = new Date(now.getFullYear(), now.getMonth(), 1);
+      to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    } else if (type === 'last_month') {
+      from = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      to = new Date(now.getFullYear(), now.getMonth(), 0);
+    } else if (type === 'this_week') {
+      const day = now.getDay(); // 0=Sun
+      from = new Date(now); from.setDate(now.getDate() - day);
+      to = new Date(now); to.setDate(now.getDate() + (6 - day));
+    } else if (type === 'last_7') {
+      from = new Date(now); from.setDate(now.getDate() - 6);
+      to = new Date(now);
+    }
+    document.getElementById('f-date-from').value = fmt(from);
+    document.getElementById('f-date-to').value = fmt(to);
+    loadReports();
+  }
+
+  function fmt(d) {
+    return d.toISOString().split('T')[0];
+  }
+
+  function clearFilters() {
+    ['f-date-from','f-date-to','f-employee','f-client'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    loadReports();
+  }
+
+  // ── Reports ─────────────────────────────────────────────────────────────────
+  async function loadReports() {
+    const params = buildParams();
+    const tbody = document.getElementById('report-tbody');
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">טוען...</td></tr>';
+    const data = await fetch(`/api/admin/logs?${params}`).then(r => r.json());
+    const logs = data.logs || [];
+    document.getElementById('stat-total-logs').textContent = logs.length;
+    const totalH = (data.total_minutes / 60).toFixed(1);
+    document.getElementById('stat-total-hours').textContent = totalH;
+    if (!logs.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">אין תוצאות</td></tr>';
+      return;
+    }
+    tbody.innerHTML = logs.map(l => `
+      <tr>
+        <td class="text-nowrap">${l.date}</td>
+        <td><span class="badge bg-secondary">${l.employee}</span></td>
+        <td>${l.client}</td>
+        <td><small>${l.description || '—'}</small></td>
+        <td class="text-nowrap text-muted small">${l.start_time}–${l.end_time}</td>
+        <td><span class="badge bg-primary">${fmtMins(l.duration_minutes)}</span></td>
+        <td>
+          <button class="btn btn-outline-danger action-btn" onclick="deleteLog(${l.id}, this)">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      </tr>`).join('');
+  }
+
+  function buildParams() {
+    const p = new URLSearchParams();
+    const from = document.getElementById('f-date-from').value;
+    const to = document.getElementById('f-date-to').value;
+    const emp = document.getElementById('f-employee').value;
+    const client = document.getElementById('f-client').value;
+    if (from) p.set('date_from', from);
+    if (to) p.set('date_to', to);
+    if (emp) p.set('employee_id', emp);
+    if (client) p.set('client_id', client);
+    return p.toString();
+  }
+
+  async function deleteLog(id, btn) {
+    if (!confirm('למחוק דיווח זה?')) return;
+    const res = await fetch(`/api/admin/logs/${id}`, {method: 'DELETE'});
+    if (res.ok) {
+      btn.closest('tr').remove();
+      showToast('הדיווח נמחק', 'success');
+    }
+  }
+
+  function exportCSV() {
+    const params = buildParams();
+    window.location.href = `/api/admin/logs/export?${params}`;
+  }
+
+  // ── Employees ───────────────────────────────────────────────────────────────
+  async function loadAdminEmployees() {
+    const emps = await fetch('/api/admin/employees').then(r => r.json());
+    const tbody = document.getElementById('emp-tbody');
+    if (!emps.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">אין עובדים</td></tr>';
+      return;
+    }
+    tbody.innerHTML = emps.map(e => `
+      <tr>
+        <td class="text-muted small">${e.id}</td>
+        <td class="fw-semibold">${e.name}</td>
+        <td><code class="bg-light rounded px-2 py-1">${e.pin}</code></td>
+        <td>
+          <button class="btn btn-outline-primary action-btn me-1" onclick='openEmpModal(${JSON.stringify(e)})'>
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button class="btn btn-outline-danger action-btn" onclick="deleteEmployee(${e.id}, this)">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      </tr>`).join('');
+  }
+
+  function openEmpModal(emp = null) {
+    document.getElementById('emp-modal-error').classList.add('d-none');
+    document.getElementById('emp-edit-id').value = emp ? emp.id : '';
+    document.getElementById('emp-name').value = emp ? emp.name : '';
+    document.getElementById('emp-pin').value = emp ? emp.pin : '';
+    document.getElementById('empModalTitle').textContent = emp ? 'עריכת עובד' : 'עובד חדש';
+    empModal.show();
+  }
+
+  async function saveEmployee() {
+    const id = document.getElementById('emp-edit-id').value;
+    const name = document.getElementById('emp-name').value.trim();
+    const pin = document.getElementById('emp-pin').value.trim();
+    const errEl = document.getElementById('emp-modal-error');
+    errEl.classList.add('d-none');
+    const url = id ? `/api/admin/employees/${id}` : '/api/admin/employees';
+    const method = id ? 'PUT' : 'POST';
+    const res = await fetch(url, {
+      method,
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name, pin})
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error; errEl.classList.remove('d-none'); return; }
+    empModal.hide();
+    showToast(id ? 'עובד עודכן' : 'עובד נוסף', 'success');
+    loadAdminEmployees();
+    loadFilterLists();
+  }
+
+  async function deleteEmployee(id, btn) {
+    if (!confirm('למחוק עובד זה? כל הדיווחים שלו יימחקו!')) return;
+    const res = await fetch(`/api/admin/employees/${id}`, {method: 'DELETE'});
+    if (res.ok) { btn.closest('tr').remove(); showToast('עובד נמחק', 'warning'); loadFilterLists(); }
+  }
+
+  // ── Clients ─────────────────────────────────────────────────────────────────
+  async function loadAdminClients() {
+    const clients = await fetch('/api/admin/clients').then(r => r.json());
+    const tbody = document.getElementById('client-tbody');
+    if (!clients.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">אין לקוחות</td></tr>';
+      return;
+    }
+    tbody.innerHTML = clients.map(c => `
+      <tr>
+        <td class="text-muted small">${c.id}</td>
+        <td class="fw-semibold">${c.name}</td>
+        <td>
+          <span class="badge ${c.is_active ? 'bg-success' : 'bg-secondary'}">
+            ${c.is_active ? 'פעיל' : 'לא פעיל'}
+          </span>
+        </td>
+        <td>
+          <button class="btn btn-outline-primary action-btn me-1" onclick='openClientModal(${JSON.stringify(c)})'>
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button class="btn btn-outline-danger action-btn" onclick="deleteClient(${c.id}, this)">
+            <i class="bi bi-trash"></i>
+          </button>
+        </td>
+      </tr>`).join('');
+  }
+
+  function openClientModal(client = null) {
+    document.getElementById('client-modal-error').classList.add('d-none');
+    document.getElementById('client-edit-id').value = client ? client.id : '';
+    document.getElementById('client-name').value = client ? client.name : '';
+    document.getElementById('client-active').checked = client ? client.is_active : true;
+    document.getElementById('clientModalTitle').textContent = client ? 'עריכת לקוח' : 'לקוח חדש';
+    const wrap = document.getElementById('client-active-wrap');
+    wrap.style.display = client ? 'block' : 'none';
+    clientModal.show();
+  }
+
+  async function saveClient() {
+    const id = document.getElementById('client-edit-id').value;
+    const name = document.getElementById('client-name').value.trim();
+    const isActive = document.getElementById('client-active').checked;
+    const errEl = document.getElementById('client-modal-error');
+    errEl.classList.add('d-none');
+    const url = id ? `/api/admin/clients/${id}` : '/api/admin/clients';
+    const method = id ? 'PUT' : 'POST';
+    const body = id ? {name, is_active: isActive} : {name};
+    const res = await fetch(url, {
+      method,
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error; errEl.classList.remove('d-none'); return; }
+    clientModal.hide();
+    showToast(id ? 'לקוח עודכן' : 'לקוח נוסף', 'success');
+    loadAdminClients();
+    loadFilterLists();
+  }
+
+  async function deleteClient(id, btn) {
+    if (!confirm('להסיר לקוח זה? הוא יסומן כלא פעיל.')) return;
+    const res = await fetch(`/api/admin/clients/${id}`, {method: 'DELETE'});
+    if (res.ok) { showToast('לקוח הוסר', 'warning'); loadAdminClients(); loadFilterLists(); }
+  }
+
+  // ── Toast ───────────────────────────────────────────────────────────────────
+  function showToast(msg, type = 'primary') {
+    const id = 'toast-' + Date.now();
+    const colors = {success:'#198754', warning:'#ffc107', primary:'#0d6efd', danger:'#dc3545'};
+    const el = document.createElement('div');
+    el.id = id;
+    el.style.cssText = `position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:9999;
+      background:${colors[type]||colors.primary};color:${type==='warning'?'#000':'#fff'};
+      padding:.6rem 1.4rem;border-radius:30px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,.2);
+      opacity:0;transition:opacity .3s;`;
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.style.opacity = 1, 10);
+    setTimeout(() => { el.style.opacity = 0; setTimeout(() => el.remove(), 300); }, 2500);
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+  function fmtMins(m) {
+    if (!m) return "0 דק'";
+    const h = Math.floor(m / 60), min = m % 60;
+    if (h === 0) return `${min} דק'`;
+    if (min === 0) return `${h} שע'`;
+    return `${h}:${String(min).padStart(2,'0')} שע'`;
+  }
+</script>
+</body>
+</html>

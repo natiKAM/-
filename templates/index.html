@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>מעקב שעות עבודה</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
+  <style>
+    body { background: #f0f4f8; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+    .navbar-brand { font-weight: 700; letter-spacing: 0.5px; }
+    .card { border: none; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+    .card-header { border-radius: 16px 16px 0 0 !important; }
+    #timer-display {
+      font-size: 3.5rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 2px;
+      color: #0d6efd;
+    }
+    #timer-display.running { color: #198754; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.7} }
+    .log-badge { font-size: .75rem; padding: .35em .65em; }
+    .btn-xl { padding: .75rem 2rem; font-size: 1.1rem; font-weight: 600; }
+    .tab-content { padding-top: 1.5rem; }
+    .nav-tabs .nav-link { color: #495057; font-weight: 500; }
+    .nav-tabs .nav-link.active { font-weight: 700; }
+    #login-card { max-width: 420px; margin: 80px auto; }
+    .pin-input { letter-spacing: .5em; font-size: 1.4rem; text-align: center; }
+    .recent-log-row:hover { background: #f8f9fa; }
+  </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container-fluid px-3">
+    <span class="navbar-brand"><i class="bi bi-clock-history me-2"></i>מעקב שעות</span>
+    <div class="d-flex align-items-center gap-2 ms-auto">
+      <span class="text-white fw-semibold d-none" id="nav-name"></span>
+      <a href="/admin" class="btn btn-outline-light btn-sm d-none" id="nav-admin-link">
+        <i class="bi bi-gear"></i> ניהול
+      </a>
+      <button class="btn btn-outline-light btn-sm d-none" id="btn-logout" onclick="logout()">
+        <i class="bi bi-box-arrow-right"></i> יציאה
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- LOGIN SECTION -->
+<div id="section-login" class="container">
+  <div id="login-card" class="card p-4">
+    <div class="text-center mb-4">
+      <i class="bi bi-person-circle" style="font-size:3rem;color:#0d6efd"></i>
+      <h4 class="mt-2 fw-bold">כניסה למערכת</h4>
+    </div>
+    <div id="login-error" class="alert alert-danger d-none"></div>
+    <div class="mb-3">
+      <label class="form-label fw-semibold">שם עובד</label>
+      <select id="sel-employee" class="form-select form-select-lg">
+        <option value="">-- בחר עובד --</option>
+      </select>
+    </div>
+    <div class="mb-4">
+      <label class="form-label fw-semibold">קוד PIN (4 ספרות)</label>
+      <input type="password" id="inp-pin" class="form-control form-control-lg pin-input"
+             maxlength="4" inputmode="numeric" placeholder="••••" />
+    </div>
+    <button class="btn btn-primary btn-xl w-100" onclick="doLogin()">
+      <i class="bi bi-box-arrow-in-right me-1"></i> כניסה
+    </button>
+    <div class="text-center mt-3">
+      <a href="/admin" class="text-muted small">כניסת מנהל</a>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN DASHBOARD (hidden until login) -->
+<div id="section-dashboard" class="container py-4 d-none">
+
+  <!-- Greeting -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h5 class="mb-0 fw-bold text-secondary">
+      <i class="bi bi-person-check-fill text-primary me-1"></i>
+      שלום, <span id="dash-name" class="text-primary"></span>
+    </h5>
+    <small class="text-muted" id="dash-date"></small>
+  </div>
+
+  <!-- Tabs -->
+  <ul class="nav nav-tabs" id="mainTab">
+    <li class="nav-item">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-timer">
+        <i class="bi bi-stopwatch me-1"></i> טיימר
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-manual">
+        <i class="bi bi-pencil-square me-1"></i> דיווח ידני
+      </button>
+    </li>
+    <li class="nav-item">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-history" onclick="loadMyLogs()">
+        <i class="bi bi-list-ul me-1"></i> היסטוריה
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+
+    <!-- TAB: TIMER -->
+    <div class="tab-pane fade show active" id="tab-timer">
+      <div class="card p-4 mb-3">
+        <div class="text-center mb-3">
+          <div id="timer-display">00:00:00</div>
+          <small id="timer-status-text" class="text-muted">לא פעיל</small>
+        </div>
+        <div id="timer-running-info" class="alert alert-success d-none mb-3 text-center">
+          <i class="bi bi-play-circle-fill me-1"></i>
+          מדידה פעילה: <strong id="timer-client-name"></strong>
+          <br /><small id="timer-desc-text" class="text-muted"></small>
+        </div>
+        <div id="timer-form">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">לקוח <span class="text-danger">*</span></label>
+            <select id="timer-client" class="form-select form-select-lg">
+              <option value="">-- בחר לקוח --</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">תיאור המשימה</label>
+            <input type="text" id="timer-desc" class="form-control form-control-lg"
+                   placeholder="למשל: פגישת ייעוץ, כתיבת הצעת מחיר..." />
+          </div>
+        </div>
+        <div class="d-grid gap-2">
+          <button id="btn-start" class="btn btn-success btn-xl" onclick="startTimer()">
+            <i class="bi bi-play-fill me-1"></i> התחל מדידה
+          </button>
+          <button id="btn-stop" class="btn btn-danger btn-xl d-none" onclick="stopTimer()">
+            <i class="bi bi-stop-fill me-1"></i> סיים מדידה
+          </button>
+        </div>
+        <div id="timer-alert" class="mt-3 d-none"></div>
+      </div>
+    </div>
+
+    <!-- TAB: MANUAL -->
+    <div class="tab-pane fade" id="tab-manual">
+      <div class="card p-4">
+        <h6 class="fw-bold mb-3"><i class="bi bi-calendar-plus me-1 text-primary"></i>דיווח שעות ידני</h6>
+        <div id="manual-alert" class="d-none mb-3"></div>
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label fw-semibold">לקוח <span class="text-danger">*</span></label>
+            <select id="manual-client" class="form-select">
+              <option value="">-- בחר לקוח --</option>
+            </select>
+          </div>
+          <div class="col-12 col-sm-4">
+            <label class="form-label fw-semibold">תאריך <span class="text-danger">*</span></label>
+            <input type="date" id="manual-date" class="form-control" />
+          </div>
+          <div class="col-6 col-sm-4">
+            <label class="form-label fw-semibold">שעת התחלה <span class="text-danger">*</span></label>
+            <input type="time" id="manual-start" class="form-control" />
+          </div>
+          <div class="col-6 col-sm-4">
+            <label class="form-label fw-semibold">שעת סיום <span class="text-danger">*</span></label>
+            <input type="time" id="manual-end" class="form-control" />
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">תיאור המשימה</label>
+            <input type="text" id="manual-desc" class="form-control"
+                   placeholder="למשל: ישיבת צוות, עבודה על פרויקט..." />
+          </div>
+          <div class="col-12">
+            <div id="manual-duration-preview" class="text-muted small mb-1"></div>
+            <button class="btn btn-primary w-100 btn-xl" onclick="submitManual()">
+              <i class="bi bi-check-lg me-1"></i> שמור דיווח
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: HISTORY -->
+    <div class="tab-pane fade" id="tab-history">
+      <div class="card p-0 overflow-hidden">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 px-4">
+          <span class="fw-bold"><i class="bi bi-clock-history me-1 text-primary"></i>30 הדיווחים האחרונים</span>
+          <button class="btn btn-sm btn-outline-primary" onclick="loadMyLogs()">
+            <i class="bi bi-arrow-clockwise"></i>
+          </button>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>תאריך</th>
+                <th>לקוח</th>
+                <th>תיאור</th>
+                <th>שעות</th>
+              </tr>
+            </thead>
+            <tbody id="history-body">
+              <tr><td colspan="4" class="text-center text-muted py-4">טוען...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end tab-content -->
+</div><!-- end dashboard -->
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  let timerInterval = null;
+  let timerStartEpoch = null;
+
+  // ── Init ────────────────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadEmployees();
+    const me = await fetch('/api/me').then(r => r.json());
+    if (me.logged_in) {
+      showDashboard(me.name, me.is_admin);
+      await loadClients();
+      await checkTimerStatus();
+    }
+    // Set today's date as default for manual form
+    document.getElementById('manual-date').value = new Date().toISOString().split('T')[0];
+    // Preview duration on time change
+    ['manual-start','manual-end'].forEach(id =>
+      document.getElementById(id).addEventListener('change', previewDuration));
+    // Login on Enter
+    document.getElementById('inp-pin').addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+  });
+
+  // ── Auth ────────────────────────────────────────────────────────────────────
+  async function loadEmployees() {
+    const emps = await fetch('/api/employees').then(r => r.json());
+    const sel = document.getElementById('sel-employee');
+    emps.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = e.id; opt.textContent = e.name;
+      sel.appendChild(opt);
+    });
+  }
+
+  async function doLogin() {
+    const empId = document.getElementById('sel-employee').value;
+    const pin = document.getElementById('inp-pin').value.trim();
+    const errEl = document.getElementById('login-error');
+    errEl.classList.add('d-none');
+    if (!empId) { showLoginError('יש לבחור עובד'); return; }
+    if (!pin) { showLoginError('יש להזין PIN'); return; }
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({employee_id: parseInt(empId), pin})
+    });
+    const data = await res.json();
+    if (!res.ok) { showLoginError(data.error); return; }
+    showDashboard(data.name, data.is_admin);
+    await loadClients();
+    await checkTimerStatus();
+  }
+
+  function showLoginError(msg) {
+    const el = document.getElementById('login-error');
+    el.textContent = msg; el.classList.remove('d-none');
+  }
+
+  function showDashboard(name, isAdmin) {
+    document.getElementById('section-login').classList.add('d-none');
+    document.getElementById('section-dashboard').classList.remove('d-none');
+    document.getElementById('dash-name').textContent = name;
+    document.getElementById('nav-name').textContent = name;
+    document.getElementById('nav-name').classList.remove('d-none');
+    document.getElementById('btn-logout').classList.remove('d-none');
+    if (isAdmin) document.getElementById('nav-admin-link').classList.remove('d-none');
+    // Set date
+    document.getElementById('dash-date').textContent = new Date().toLocaleDateString('he-IL', {
+      weekday:'long', year:'numeric', month:'long', day:'numeric'
+    });
+  }
+
+  async function logout() {
+    await fetch('/api/logout', {method:'POST'});
+    location.reload();
+  }
+
+  // ── Clients ─────────────────────────────────────────────────────────────────
+  async function loadClients() {
+    const clients = await fetch('/api/clients').then(r => r.json());
+    ['timer-client','manual-client'].forEach(id => {
+      const sel = document.getElementById(id);
+      sel.innerHTML = '<option value="">-- בחר לקוח --</option>';
+      clients.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id; opt.textContent = c.name;
+        sel.appendChild(opt);
+      });
+    });
+  }
+
+  // ── Timer ───────────────────────────────────────────────────────────────────
+  async function checkTimerStatus() {
+    const data = await fetch('/api/timer/status').then(r => r.json());
+    if (data.running) {
+      timerStartEpoch = new Date(data.start_time).getTime();
+      setTimerRunningUI(data.client_id, data.description, data.elapsed_seconds);
+    }
+  }
+
+  function setTimerRunningUI(clientId, description, elapsedInit) {
+    document.getElementById('btn-start').classList.add('d-none');
+    document.getElementById('btn-stop').classList.remove('d-none');
+    document.getElementById('timer-form').style.opacity = '0.4';
+    document.getElementById('timer-form').style.pointerEvents = 'none';
+    document.getElementById('timer-display').classList.add('running');
+    document.getElementById('timer-status-text').textContent = 'מדידה פעילה...';
+    const infoEl = document.getElementById('timer-running-info');
+    infoEl.classList.remove('d-none');
+    // Find client name from select
+    const sel = document.getElementById('timer-client');
+    const opt = sel.querySelector(`option[value="${clientId}"]`);
+    document.getElementById('timer-client-name').textContent = opt ? opt.textContent : '';
+    document.getElementById('timer-desc-text').textContent = description || '';
+    // Start interval
+    let elapsed = elapsedInit || 0;
+    clearInterval(timerInterval);
+    updateTimerDisplay(elapsed);
+    timerInterval = setInterval(() => { elapsed++; updateTimerDisplay(elapsed); }, 1000);
+  }
+
+  function updateTimerDisplay(seconds) {
+    const h = Math.floor(seconds / 3600).toString().padStart(2,'0');
+    const m = Math.floor((seconds % 3600) / 60).toString().padStart(2,'0');
+    const s = (seconds % 60).toString().padStart(2,'0');
+    document.getElementById('timer-display').textContent = `${h}:${m}:${s}`;
+  }
+
+  async function startTimer() {
+    const clientId = document.getElementById('timer-client').value;
+    const desc = document.getElementById('timer-desc').value.trim();
+    const alertEl = document.getElementById('timer-alert');
+    alertEl.classList.add('d-none');
+    if (!clientId) {
+      alertEl.innerHTML = '<div class="alert alert-warning">יש לבחור לקוח</div>';
+      alertEl.classList.remove('d-none'); return;
+    }
+    const res = await fetch('/api/timer/start', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({client_id: parseInt(clientId), description: desc})
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alertEl.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+      alertEl.classList.remove('d-none'); return;
+    }
+    timerStartEpoch = new Date(data.start_time).getTime();
+    setTimerRunningUI(clientId, desc, 0);
+  }
+
+  async function stopTimer() {
+    const res = await fetch('/api/timer/stop', {method:'POST'});
+    const data = await res.json();
+    clearInterval(timerInterval);
+    timerInterval = null;
+    document.getElementById('btn-start').classList.remove('d-none');
+    document.getElementById('btn-stop').classList.add('d-none');
+    document.getElementById('timer-form').style.opacity = '';
+    document.getElementById('timer-form').style.pointerEvents = '';
+    document.getElementById('timer-display').textContent = '00:00:00';
+    document.getElementById('timer-display').classList.remove('running');
+    document.getElementById('timer-status-text').textContent = 'לא פעיל';
+    document.getElementById('timer-running-info').classList.add('d-none');
+    if (res.ok) {
+      const mins = data.duration_minutes;
+      const alertEl = document.getElementById('timer-alert');
+      alertEl.innerHTML = `<div class="alert alert-success">
+        <i class="bi bi-check-circle me-1"></i>
+        נשמר! סה"כ: <strong>${fmtMins(mins)}</strong>
+      </div>`;
+      alertEl.classList.remove('d-none');
+      setTimeout(() => alertEl.classList.add('d-none'), 4000);
+    }
+  }
+
+  // ── Manual ──────────────────────────────────────────────────────────────────
+  function previewDuration() {
+    const startVal = document.getElementById('manual-start').value;
+    const endVal = document.getElementById('manual-end').value;
+    const prev = document.getElementById('manual-duration-preview');
+    if (startVal && endVal) {
+      const today = document.getElementById('manual-date').value || '2000-01-01';
+      const start = new Date(`${today}T${startVal}`);
+      const end = new Date(`${today}T${endVal}`);
+      const diff = (end - start) / 60000;
+      if (diff > 0) {
+        prev.textContent = `משך: ${fmtMins(diff)}`;
+        prev.className = 'text-success small mb-1 fw-semibold';
+      } else {
+        prev.textContent = 'שעת הסיום חייבת להיות אחרי שעת ההתחלה';
+        prev.className = 'text-danger small mb-1';
+      }
+    }
+  }
+
+  async function submitManual() {
+    const date = document.getElementById('manual-date').value;
+    const start = document.getElementById('manual-start').value;
+    const end = document.getElementById('manual-end').value;
+    const client = document.getElementById('manual-client').value;
+    const desc = document.getElementById('manual-desc').value.trim();
+    const alertEl = document.getElementById('manual-alert');
+    alertEl.classList.add('d-none');
+
+    const res = await fetch('/api/logs/manual', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({date, start_time: start, end_time: end, client_id: parseInt(client), description: desc})
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alertEl.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+      alertEl.classList.remove('d-none'); return;
+    }
+    alertEl.innerHTML = '<div class="alert alert-success"><i class="bi bi-check-circle me-1"></i>הדיווח נשמר בהצלחה!</div>';
+    alertEl.classList.remove('d-none');
+    ['manual-client','manual-start','manual-end','manual-desc'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('manual-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('manual-duration-preview').textContent = '';
+    setTimeout(() => alertEl.classList.add('d-none'), 3000);
+  }
+
+  // ── History ─────────────────────────────────────────────────────────────────
+  async function loadMyLogs() {
+    const tbody = document.getElementById('history-body');
+    tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">טוען...</td></tr>';
+    const logs = await fetch('/api/my/logs').then(r => r.json());
+    if (!logs.length) {
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">אין דיווחים עדיין</td></tr>';
+      return;
+    }
+    tbody.innerHTML = logs.map(l => `
+      <tr class="recent-log-row">
+        <td><span class="text-nowrap">${l.date}</span><br/><small class="text-muted">${l.start_time}–${l.end_time}</small></td>
+        <td>${l.client}</td>
+        <td><small>${l.description || '—'}</small></td>
+        <td><span class="badge bg-primary log-badge">${fmtMins(l.duration_minutes)}</span></td>
+      </tr>`).join('');
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+  function fmtMins(m) {
+    if (!m) return '0 דק\'';
+    const h = Math.floor(m / 60);
+    const min = m % 60;
+    if (h === 0) return `${min} דק'`;
+    if (min === 0) return `${h} שע'`;
+    return `${h}:${String(min).padStart(2,'0')} שע'`;
+  }
+</script>
+</body>
+</html>
