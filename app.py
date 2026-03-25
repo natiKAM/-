@@ -19,8 +19,15 @@ db.init_app(app)
 
 # Initialize DB on startup (works with both gunicorn and direct run)
 with app.app_context():
-    from models import db as _db
-    _db.create_all()
+    db.create_all()
+    # Create default admin if not exists
+    if not Employee.query.filter_by(is_admin=True).first():
+        admin = Employee(name='Admin', pin='1234', is_admin=True)
+        db.session.add(admin)
+    if not Client.query.first():
+        for name in ['לקוח לדוגמה א', 'לקוח לדוגמה ב']:
+            db.session.add(Client(name=name))
+    db.session.commit()
 
 
 def init_db():
