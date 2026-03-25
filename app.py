@@ -17,6 +17,11 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 
+# Initialize DB on startup (works with both gunicorn and direct run)
+with app.app_context():
+    from models import db as _db
+    _db.create_all()
+
 
 def init_db():
     with app.app_context():
@@ -396,4 +401,5 @@ def admin_delete_client(client_id):
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)
