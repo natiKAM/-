@@ -3,77 +3,468 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ניהול מערכת - מעקב שעות</title>
+  <title>ניהול מערכת | Brandy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" />
   <style>
-    body { background: #f0f4f8; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
-    .card { border: none; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,.08); }
-    .card-header { border-radius: 16px 16px 0 0 !important; }
-    #login-card { max-width: 420px; margin: 80px auto; }
-    .pin-input { letter-spacing: .5em; font-size: 1.4rem; text-align: center; }
-    .btn-xl { padding: .75rem 2rem; font-size: 1.1rem; font-weight: 600; }
-    .nav-pills .nav-link { color: #495057; font-weight: 500; border-radius: 10px; }
-    .nav-pills .nav-link.active { font-weight: 700; }
-    .stat-card { border-radius: 12px; padding: 1rem 1.5rem; }
-    table th { font-weight: 600; white-space: nowrap; }
+    /* ── Base ─────────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      background: #191917;
+      font-family: 'Heebo', Arial, sans-serif;
+      color: #f5f5f5;
+      min-height: 100vh;
+    }
+
+    /* ── Navbar ───────────────────────────────────────────────────────────── */
+    .brandy-nav {
+      background: #191917;
+      border-bottom: 1px solid #333023;
+      padding: .75rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 1030;
+    }
+    .brandy-logo {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.1;
+      text-decoration: none;
+    }
+    .brandy-logo .logo-main {
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: .5px;
+      color: #f5f5f5;
+    }
+    .brandy-logo .logo-main .bracket { color: #ceff00; }
+    .brandy-logo .logo-sub {
+      font-size: .65rem;
+      font-weight: 400;
+      color: #878686;
+      letter-spacing: 1.5px;
+      text-transform: lowercase;
+    }
+    .admin-badge {
+      background: rgba(206,255,0,.12);
+      border: 1px solid rgba(206,255,0,.3);
+      color: #ceff00;
+      border-radius: 6px;
+      padding: .2rem .6rem;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+    }
+    .btn-nav-action {
+      background: transparent;
+      border: 1px solid #4a4535;
+      color: #878686;
+      border-radius: 8px;
+      padding: .3rem .75rem;
+      font-size: .82rem;
+      font-weight: 500;
+      transition: all .2s;
+    }
+    .btn-nav-action:hover { border-color: #ceff00; color: #ceff00; }
+    .btn-nav-back {
+      background: transparent;
+      border: 1px solid #4a4535;
+      color: #d1ccbc;
+      border-radius: 8px;
+      padding: .3rem .75rem;
+      font-size: .82rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all .2s;
+      display: inline-flex;
+      align-items: center;
+      gap: .3rem;
+    }
+    .btn-nav-back:hover { border-color: #878686; color: #f5f5f5; }
+
+    /* ── Cards ────────────────────────────────────────────────────────────── */
+    .card {
+      background: #333023;
+      border: 1px solid #4a4535;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.35);
+    }
+    .card-header {
+      background: #2a2620 !important;
+      border-bottom: 1px solid #4a4535;
+      border-radius: 16px 16px 0 0 !important;
+    }
+
+    /* ── Login ────────────────────────────────────────────────────────────── */
+    #login-card {
+      max-width: 440px;
+      margin: 72px auto;
+      border: 1px solid #4a4535;
+    }
+    .login-icon-wrap {
+      width: 64px;
+      height: 64px;
+      background: #ceff00;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+    }
+    .login-icon-wrap i { font-size: 1.8rem; color: #191917; }
+
+    /* ── Form controls ────────────────────────────────────────────────────── */
+    .form-label { color: #d1ccbc; font-weight: 600; font-size: .88rem; margin-bottom: .4rem; }
+    .form-control, .form-select {
+      background: #191917 !important;
+      border: 1px solid #878686;
+      color: #f5f5f5 !important;
+      border-radius: 10px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .form-control::placeholder { color: #595855; }
+    .form-control:focus, .form-select:focus {
+      border-color: #ceff00 !important;
+      box-shadow: 0 0 0 3px rgba(206,255,0,.15) !important;
+      outline: none;
+      background: #191917 !important;
+      color: #f5f5f5 !important;
+    }
+    .form-select option { background: #191917; color: #f5f5f5; }
+    .pin-input {
+      letter-spacing: .5em;
+      font-size: 1.4rem;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    /* ── Buttons ──────────────────────────────────────────────────────────── */
+    .btn-primary {
+      background: #ceff00 !important;
+      border-color: #ceff00 !important;
+      color: #191917 !important;
+      font-weight: 700;
+      border-radius: 10px;
+      transition: all .2s;
+    }
+    .btn-primary:hover, .btn-primary:focus {
+      background: #d8ff33 !important;
+      border-color: #d8ff33 !important;
+      color: #191917 !important;
+      box-shadow: 0 4px 16px rgba(206,255,0,.35) !important;
+    }
+    .btn-xl { padding: .75rem 2rem; font-size: 1.05rem; font-weight: 700; }
+    .btn-success {
+      background: #ceff00 !important;
+      border-color: #ceff00 !important;
+      color: #191917 !important;
+      font-weight: 700;
+      border-radius: 10px;
+      transition: all .2s;
+    }
+    .btn-success:hover, .btn-success:focus {
+      background: #d8ff33 !important;
+      border-color: #d8ff33 !important;
+      box-shadow: 0 4px 16px rgba(206,255,0,.3) !important;
+    }
+    .btn-secondary {
+      background: #4a4535 !important;
+      border-color: #4a4535 !important;
+      color: #d1ccbc !important;
+      font-weight: 600;
+      border-radius: 10px;
+      transition: all .2s;
+    }
+    .btn-secondary:hover {
+      background: #5a5542 !important;
+      border-color: #6a6552 !important;
+    }
+    .btn-outline-secondary {
+      border-color: #4a4535 !important;
+      color: #878686 !important;
+      background: transparent !important;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: all .2s;
+    }
+    .btn-outline-secondary:hover {
+      background: #4a4535 !important;
+      color: #d1ccbc !important;
+      border-color: #4a4535 !important;
+    }
+    .btn-outline-primary {
+      border-color: #ceff00 !important;
+      color: #ceff00 !important;
+      background: transparent !important;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: all .2s;
+    }
+    .btn-outline-primary:hover {
+      background: #ceff00 !important;
+      color: #191917 !important;
+    }
+    .btn-outline-danger {
+      border-color: #7a2020 !important;
+      color: #ff6b6b !important;
+      background: transparent !important;
+      border-radius: 8px;
+      transition: all .2s;
+    }
+    .btn-outline-danger:hover {
+      background: #3d1a1a !important;
+      border-color: #ff6b6b !important;
+    }
     .action-btn { padding: .2rem .5rem; font-size: .8rem; }
-    .modal-header { border-radius: 16px 16px 0 0; }
+
+    /* ── Nav pills ────────────────────────────────────────────────────────── */
+    .nav-pills {
+      gap: .25rem;
+      border-bottom: 1px solid #4a4535;
+      padding-bottom: .25rem;
+    }
+    .nav-pills .nav-link {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: #878686;
+      font-weight: 600;
+      padding: .65rem 1.1rem;
+      border-radius: 0;
+      transition: all .2s;
+      font-size: .9rem;
+    }
+    .nav-pills .nav-link:hover { color: #d1ccbc; }
+    .nav-pills .nav-link.active {
+      background: transparent !important;
+      color: #ceff00 !important;
+      border-bottom-color: #ceff00 !important;
+      border-radius: 0 !important;
+    }
+
+    /* ── Stat cards ───────────────────────────────────────────────────────── */
+    .stat-card {
+      background: #ceff00;
+      border: none;
+      border-radius: 14px;
+      padding: 1.1rem 1.5rem;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(206,255,0,.2);
+    }
+    .stat-card .stat-value {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #191917;
+      line-height: 1.1;
+    }
+    .stat-card .stat-label {
+      font-size: .78rem;
+      font-weight: 600;
+      color: #333023;
+      margin-top: .2rem;
+    }
+
+    /* ── Tables ───────────────────────────────────────────────────────────── */
+    .table {
+      color: #d1ccbc;
+      --bs-table-bg: transparent;
+      --bs-table-hover-bg: rgba(206,255,0,.04);
+      --bs-table-border-color: #3d3929;
+    }
+    .table thead th {
+      background: #ceff00 !important;
+      color: #191917 !important;
+      font-weight: 700;
+      font-size: .82rem;
+      letter-spacing: .3px;
+      border-color: #ceff00 !important;
+      padding: .75rem 1rem;
+      white-space: nowrap;
+    }
+    .table tbody td {
+      border-color: #3d3929;
+      padding: .7rem 1rem;
+      vertical-align: middle;
+    }
+
+    /* ── Badges ───────────────────────────────────────────────────────────── */
+    .badge {
+      font-weight: 700;
+      border-radius: 6px;
+      font-size: .75rem;
+      padding: .35em .65em;
+    }
+    .badge.bg-primary {
+      background: #ceff00 !important;
+      color: #191917 !important;
+    }
+    .badge.bg-secondary {
+      background: #4a4535 !important;
+      color: #d1ccbc !important;
+    }
+    .badge.bg-success {
+      background: rgba(206,255,0,.15) !important;
+      color: #ceff00 !important;
+      border: 1px solid rgba(206,255,0,.3);
+    }
+    .badge.bg-warning {
+      background: rgba(255,213,128,.15) !important;
+      color: #ffd580 !important;
+      border: 1px solid rgba(255,213,128,.3);
+    }
+
+    /* ── Alerts ───────────────────────────────────────────────────────────── */
+    .alert-danger {
+      background: #2e1010 !important;
+      border-color: #5c1e1e !important;
+      color: #ff8080 !important;
+      border-radius: 10px;
+    }
+
+    /* ── Filter card ──────────────────────────────────────────────────────── */
+    .filter-card { border: 1px solid #4a4535; }
+    .quick-range-btn {
+      background: transparent;
+      border: 1px solid #4a4535;
+      color: #878686;
+      border-radius: 8px;
+      padding: .25rem .7rem;
+      font-size: .8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s;
+      font-family: 'Heebo', Arial, sans-serif;
+    }
+    .quick-range-btn:hover {
+      border-color: #ceff00;
+      color: #ceff00;
+    }
+
+    /* ── Card headers ─────────────────────────────────────────────────────── */
+    .card-header-title { color: #d1ccbc; font-weight: 700; }
+    .card-header-title i { color: #ceff00; }
+
+    /* ── PIN code display ─────────────────────────────────────────────────── */
+    .pin-code {
+      background: #191917;
+      border: 1px solid #4a4535;
+      border-radius: 6px;
+      padding: .15rem .5rem;
+      font-family: monospace;
+      color: #ceff00;
+      font-size: .9rem;
+      letter-spacing: .2em;
+    }
+
+    /* ── Modals ───────────────────────────────────────────────────────────── */
+    .modal-content {
+      background: #333023;
+      border: 1px solid #4a4535;
+      border-radius: 16px;
+    }
+    .modal-header {
+      background: #2a2620;
+      border-bottom: 1px solid #4a4535;
+      border-radius: 16px 16px 0 0;
+    }
+    .modal-header .modal-title { color: #f5f5f5; font-weight: 700; }
+    .modal-header .btn-close { filter: invert(1) opacity(.6); }
+    .modal-header .btn-close:hover { filter: invert(1) opacity(1); }
+    .modal-footer {
+      background: #2a2620;
+      border-top: 1px solid #4a4535;
+      border-radius: 0 0 16px 16px;
+    }
+    .modal-backdrop { background: rgba(0,0,0,.7); }
+
+    /* ── Dashboard title ──────────────────────────────────────────────────── */
+    .admin-page-title {
+      color: #d1ccbc;
+      font-weight: 800;
+      font-size: 1.15rem;
+    }
+    .admin-page-title i { color: #ceff00; }
+
+    /* ── Scrollbar ────────────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #191917; }
+    ::-webkit-scrollbar-thumb { background: #4a4535; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #ceff00; }
+
+    /* ── Form switch ──────────────────────────────────────────────────────── */
+    .form-check-input { background-color: #4a4535; border-color: #878686; }
+    .form-check-input:checked { background-color: #ceff00; border-color: #ceff00; }
+    .form-check-label { color: #d1ccbc; }
   </style>
 </head>
 <body>
 
-<!-- Navbar -->
-<nav class="navbar navbar-dark bg-dark">
+<!-- ── Navbar ─────────────────────────────────────────────────────────────── -->
+<nav class="brandy-nav">
   <div class="container-fluid px-3">
-    <span class="navbar-brand fw-bold">
-      <i class="bi bi-shield-lock me-2"></i>לוח ניהול
-    </span>
-    <div class="d-flex align-items-center gap-2 ms-auto">
-      <a href="/" class="btn btn-outline-light btn-sm">
-        <i class="bi bi-arrow-right me-1"></i> חזור
-      </a>
-      <button class="btn btn-outline-danger btn-sm d-none" id="btn-logout" onclick="logout()">
-        <i class="bi bi-box-arrow-right"></i> יציאה
-      </button>
+    <div class="d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center gap-3">
+        <a href="/" class="brandy-logo">
+          <span class="logo-main"><span class="bracket">[</span>Brandy<span class="bracket">]</span></span>
+          <span class="logo-sub">own your story</span>
+        </a>
+        <span class="admin-badge">Admin</span>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <a href="/" class="btn-nav-back">
+          <i class="bi bi-arrow-right"></i> חזור
+        </a>
+        <button class="btn-nav-action d-none" id="btn-logout" onclick="logout()">
+          <i class="bi bi-box-arrow-right me-1"></i>יציאה
+        </button>
+      </div>
     </div>
   </div>
 </nav>
 
-<!-- LOGIN -->
+<!-- ── LOGIN ──────────────────────────────────────────────────────────────── -->
 <div id="section-login" class="container">
-  <div id="login-card" class="card p-4">
+  <div id="login-card" class="card p-4 p-sm-5">
     <div class="text-center mb-4">
-      <i class="bi bi-shield-lock-fill" style="font-size:3rem;color:#212529"></i>
-      <h4 class="mt-2 fw-bold">כניסת מנהל</h4>
+      <div class="login-icon-wrap">
+        <i class="bi bi-shield-lock-fill"></i>
+      </div>
+      <h4 class="fw-800 mb-1" style="font-weight:800;color:#f5f5f5;">כניסת מנהל</h4>
+      <p class="mb-0" style="color:#878686;font-size:.85rem;">גישה מוגבלת לצוות ניהול</p>
     </div>
     <div id="login-error" class="alert alert-danger d-none"></div>
     <div class="mb-3">
-      <label class="form-label fw-semibold">שם משתמש</label>
+      <label class="form-label">שם משתמש</label>
       <select id="sel-employee" class="form-select form-select-lg">
         <option value="">-- בחר --</option>
       </select>
     </div>
     <div class="mb-4">
-      <label class="form-label fw-semibold">קוד PIN</label>
+      <label class="form-label">קוד PIN</label>
       <input type="password" id="inp-pin" class="form-control form-control-lg pin-input"
              maxlength="4" inputmode="numeric" placeholder="••••" />
     </div>
-    <button class="btn btn-dark btn-xl w-100" onclick="doLogin()">
+    <button class="btn btn-primary btn-xl w-100" onclick="doLogin()">
       <i class="bi bi-box-arrow-in-right me-1"></i> כניסה
     </button>
   </div>
 </div>
 
-<!-- ADMIN DASHBOARD -->
+<!-- ── ADMIN DASHBOARD ────────────────────────────────────────────────────── -->
 <div id="section-admin" class="container-fluid py-4 px-3 px-md-4 d-none">
 
-  <h5 class="fw-bold mb-3 text-secondary">
-    <i class="bi bi-speedometer2 me-1 text-dark"></i> לוח הניהול
-  </h5>
+  <div class="d-flex align-items-center gap-2 mb-4">
+    <h5 class="admin-page-title mb-0">
+      <i class="bi bi-speedometer2 me-1"></i> לוח הניהול
+    </h5>
+  </div>
 
   <!-- Nav Pills -->
-  <ul class="nav nav-pills mb-4 flex-wrap gap-1">
+  <ul class="nav nav-pills mb-4 flex-wrap">
     <li class="nav-item">
       <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tab-reports" onclick="loadReports()">
         <i class="bi bi-bar-chart me-1"></i> דוחות
@@ -93,27 +484,28 @@
 
   <div class="tab-content">
 
-    <!-- TAB: REPORTS -->
+    <!-- TAB: REPORTS ───────────────────────────────────────────────────────── -->
     <div class="tab-pane fade show active" id="tab-reports">
+
       <!-- Filters -->
-      <div class="card p-3 mb-3">
+      <div class="card filter-card p-3 mb-3">
         <div class="row g-2 align-items-end">
           <div class="col-6 col-md-3">
-            <label class="form-label fw-semibold small mb-1">מתאריך</label>
+            <label class="form-label small mb-1">מתאריך</label>
             <input type="date" id="f-date-from" class="form-control form-control-sm" />
           </div>
           <div class="col-6 col-md-3">
-            <label class="form-label fw-semibold small mb-1">עד תאריך</label>
+            <label class="form-label small mb-1">עד תאריך</label>
             <input type="date" id="f-date-to" class="form-control form-control-sm" />
           </div>
           <div class="col-6 col-md-2">
-            <label class="form-label fw-semibold small mb-1">עובד</label>
+            <label class="form-label small mb-1">עובד</label>
             <select id="f-employee" class="form-select form-select-sm">
               <option value="">כולם</option>
             </select>
           </div>
           <div class="col-6 col-md-2">
-            <label class="form-label fw-semibold small mb-1">לקוח</label>
+            <label class="form-label small mb-1">לקוח</label>
             <select id="f-client" class="form-select form-select-sm">
               <option value="">כולם</option>
             </select>
@@ -129,40 +521,40 @@
         </div>
         <!-- Quick ranges -->
         <div class="mt-2 d-flex flex-wrap gap-1">
-          <button class="btn btn-outline-secondary btn-sm" onclick="setRange('this_month')">החודש</button>
-          <button class="btn btn-outline-secondary btn-sm" onclick="setRange('last_month')">חודש שעבר</button>
-          <button class="btn btn-outline-secondary btn-sm" onclick="setRange('this_week')">השבוע</button>
-          <button class="btn btn-outline-secondary btn-sm" onclick="setRange('last_7')">7 ימים אחרונים</button>
+          <button class="quick-range-btn" onclick="setRange('this_month')">החודש</button>
+          <button class="quick-range-btn" onclick="setRange('last_month')">חודש שעבר</button>
+          <button class="quick-range-btn" onclick="setRange('this_week')">השבוע</button>
+          <button class="quick-range-btn" onclick="setRange('last_7')">7 ימים אחרונים</button>
         </div>
       </div>
 
-      <!-- Summary -->
+      <!-- Summary stats -->
       <div class="row g-2 mb-3" id="summary-row">
         <div class="col-6 col-md-3">
-          <div class="card stat-card bg-primary text-white text-center">
-            <div class="fw-bold fs-4" id="stat-total-hours">—</div>
-            <small>סה"כ שעות</small>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-total-hours">—</div>
+            <div class="stat-label">סה"כ שעות</div>
           </div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="card stat-card bg-success text-white text-center">
-            <div class="fw-bold fs-4" id="stat-total-logs">—</div>
-            <small>מספר דיווחים</small>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-total-logs">—</div>
+            <div class="stat-label">מספר דיווחים</div>
           </div>
         </div>
       </div>
 
-      <!-- Table -->
+      <!-- Reports table -->
       <div class="card p-0 overflow-hidden">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 px-3">
-          <span class="fw-bold"><i class="bi bi-table me-1"></i>טבלת דיווחים</span>
+        <div class="card-header d-flex justify-content-between align-items-center py-3 px-3">
+          <span class="card-header-title"><i class="bi bi-table me-1"></i>טבלת דיווחים</span>
           <button class="btn btn-success btn-sm" onclick="exportCSV()">
             <i class="bi bi-download me-1"></i> ייצוא CSV
           </button>
         </div>
         <div class="table-responsive">
           <table class="table table-hover mb-0 table-sm">
-            <thead class="table-dark">
+            <thead>
               <tr>
                 <th>תאריך</th>
                 <th>עובד</th>
@@ -174,51 +566,51 @@
               </tr>
             </thead>
             <tbody id="report-tbody">
-              <tr><td colspan="7" class="text-center text-muted py-4">לחץ "סנן" לטעינת דוחות</td></tr>
+              <tr><td colspan="7" class="text-center py-4" style="color:#595855;">לחץ "סנן" לטעינת דוחות</td></tr>
             </tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- TAB: EMPLOYEES -->
+    <!-- TAB: EMPLOYEES ─────────────────────────────────────────────────────── -->
     <div class="tab-pane fade" id="tab-employees">
       <div class="card p-0 overflow-hidden">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 px-3">
-          <span class="fw-bold"><i class="bi bi-people-fill me-1 text-primary"></i>ניהול עובדים</span>
+        <div class="card-header d-flex justify-content-between align-items-center py-3 px-3">
+          <span class="card-header-title"><i class="bi bi-people-fill me-1"></i>ניהול עובדים</span>
           <button class="btn btn-primary btn-sm" onclick="openEmpModal()">
             <i class="bi bi-plus-lg me-1"></i> עובד חדש
           </button>
         </div>
         <div class="table-responsive">
           <table class="table table-hover mb-0">
-            <thead class="table-light">
+            <thead>
               <tr><th>#</th><th>שם</th><th>PIN</th><th>פעולות</th></tr>
             </thead>
             <tbody id="emp-tbody">
-              <tr><td colspan="4" class="text-center text-muted py-4">טוען...</td></tr>
+              <tr><td colspan="4" class="text-center py-4" style="color:#595855;">טוען...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- TAB: CLIENTS -->
+    <!-- TAB: CLIENTS ───────────────────────────────────────────────────────── -->
     <div class="tab-pane fade" id="tab-clients">
       <div class="card p-0 overflow-hidden">
-        <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 px-3">
-          <span class="fw-bold"><i class="bi bi-building-fill me-1 text-success"></i>ניהול לקוחות</span>
-          <button class="btn btn-success btn-sm" onclick="openClientModal()">
+        <div class="card-header d-flex justify-content-between align-items-center py-3 px-3">
+          <span class="card-header-title"><i class="bi bi-building-fill me-1"></i>ניהול לקוחות</span>
+          <button class="btn btn-primary btn-sm" onclick="openClientModal()">
             <i class="bi bi-plus-lg me-1"></i> לקוח חדש
           </button>
         </div>
         <div class="table-responsive">
           <table class="table table-hover mb-0">
-            <thead class="table-light">
+            <thead>
               <tr><th>#</th><th>שם לקוח</th><th>סטטוס</th><th>פעולות</th></tr>
             </thead>
             <tbody id="client-tbody">
-              <tr><td colspan="4" class="text-center text-muted py-4">טוען...</td></tr>
+              <tr><td colspan="4" class="text-center py-4" style="color:#595855;">טוען...</td></tr>
             </tbody>
           </table>
         </div>
@@ -231,20 +623,20 @@
 <!-- ── EMPLOYEE MODAL ─────────────────────────────────────────────────────── -->
 <div class="modal fade" id="empModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="border-radius:16px;border:none">
-      <div class="modal-header bg-primary text-white">
+    <div class="modal-content">
+      <div class="modal-header">
         <h5 class="modal-title" id="empModalTitle">עובד חדש</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-4">
         <div id="emp-modal-error" class="alert alert-danger d-none"></div>
         <input type="hidden" id="emp-edit-id" />
         <div class="mb-3">
-          <label class="form-label fw-semibold">שם עובד <span class="text-danger">*</span></label>
+          <label class="form-label">שם עובד <span style="color:#ff6b6b;">*</span></label>
           <input type="text" id="emp-name" class="form-control form-control-lg" placeholder="שם מלא" />
         </div>
         <div class="mb-3">
-          <label class="form-label fw-semibold">PIN (4 ספרות) <span class="text-danger">*</span></label>
+          <label class="form-label">PIN (4 ספרות) <span style="color:#ff6b6b;">*</span></label>
           <input type="text" id="emp-pin" class="form-control form-control-lg pin-input"
                  maxlength="4" inputmode="numeric" placeholder="••••" />
         </div>
@@ -262,16 +654,16 @@
 <!-- ── CLIENT MODAL ───────────────────────────────────────────────────────── -->
 <div class="modal fade" id="clientModal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="border-radius:16px;border:none">
-      <div class="modal-header bg-success text-white">
+    <div class="modal-content">
+      <div class="modal-header">
         <h5 class="modal-title" id="clientModalTitle">לקוח חדש</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body p-4">
         <div id="client-modal-error" class="alert alert-danger d-none"></div>
         <input type="hidden" id="client-edit-id" />
         <div class="mb-3">
-          <label class="form-label fw-semibold">שם לקוח <span class="text-danger">*</span></label>
+          <label class="form-label">שם לקוח <span style="color:#ff6b6b;">*</span></label>
           <input type="text" id="client-name" class="form-control form-control-lg" placeholder="שם החברה / לקוח" />
         </div>
         <div class="form-check form-switch mb-3" id="client-active-wrap" style="display:none!important">
@@ -281,7 +673,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" data-bs-dismiss="modal">ביטול</button>
-        <button class="btn btn-success px-4" onclick="saveClient()">
+        <button class="btn btn-primary px-4" onclick="saveClient()">
           <i class="bi bi-check-lg me-1"></i> שמור
         </button>
       </div>
@@ -422,23 +814,23 @@
   async function loadReports() {
     const params = buildParams();
     const tbody = document.getElementById('report-tbody');
-    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">טוען...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4" style="color:#595855;">טוען...</td></tr>';
     const data = await fetch(`/api/admin/logs?${params}`).then(r => r.json());
     const logs = data.logs || [];
     document.getElementById('stat-total-logs').textContent = logs.length;
     const totalH = (data.total_minutes / 60).toFixed(1);
     document.getElementById('stat-total-hours').textContent = totalH;
     if (!logs.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">אין תוצאות</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4" style="color:#595855;">אין תוצאות</td></tr>';
       return;
     }
     tbody.innerHTML = logs.map(l => `
       <tr>
-        <td class="text-nowrap">${l.date}</td>
+        <td class="text-nowrap" style="color:#d1ccbc;">${l.date}</td>
         <td><span class="badge bg-secondary">${l.employee}</span></td>
-        <td>${l.client}</td>
-        <td><small>${l.description || '—'}</small></td>
-        <td class="text-nowrap text-muted small">${l.start_time}–${l.end_time}</td>
+        <td style="color:#d1ccbc;">${l.client}</td>
+        <td><small style="color:#878686;">${l.description || '—'}</small></td>
+        <td class="text-nowrap small" style="color:#595855;">${l.start_time}–${l.end_time}</td>
         <td><span class="badge bg-primary">${fmtMins(l.duration_minutes)}</span></td>
         <td>
           <button class="btn btn-outline-danger action-btn" onclick="deleteLog(${l.id}, this)">
@@ -480,14 +872,14 @@
     const emps = await fetch('/api/admin/employees').then(r => r.json());
     const tbody = document.getElementById('emp-tbody');
     if (!emps.length) {
-      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">אין עובדים</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4" style="color:#595855;">אין עובדים</td></tr>';
       return;
     }
     tbody.innerHTML = emps.map(e => `
       <tr>
-        <td class="text-muted small">${e.id}</td>
-        <td class="fw-semibold">${e.name}</td>
-        <td><code class="bg-light rounded px-2 py-1">${e.pin}</code></td>
+        <td style="color:#595855;font-size:.82rem;">${e.id}</td>
+        <td class="fw-semibold" style="color:#d1ccbc;">${e.name}</td>
+        <td><code class="pin-code">${e.pin}</code></td>
         <td>
           <button class="btn btn-outline-primary action-btn me-1" onclick='openEmpModal(${JSON.stringify(e)})'>
             <i class="bi bi-pencil"></i>
@@ -540,13 +932,13 @@
     const clients = await fetch('/api/admin/clients').then(r => r.json());
     const tbody = document.getElementById('client-tbody');
     if (!clients.length) {
-      tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">אין לקוחות</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4" style="color:#595855;">אין לקוחות</td></tr>';
       return;
     }
     tbody.innerHTML = clients.map(c => `
       <tr>
-        <td class="text-muted small">${c.id}</td>
-        <td class="fw-semibold">${c.name}</td>
+        <td style="color:#595855;font-size:.82rem;">${c.id}</td>
+        <td class="fw-semibold" style="color:#d1ccbc;">${c.name}</td>
         <td>
           <span class="badge ${c.is_active ? 'bg-success' : 'bg-secondary'}">
             ${c.is_active ? 'פעיל' : 'לא פעיל'}
