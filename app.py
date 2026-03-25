@@ -61,7 +61,11 @@ def login():
     data = request.json
     emp_id = data.get('employee_id')
     pin = data.get('pin', '').strip()
-    emp = Employee.query.filter_by(id=emp_id, pin=pin).first()
+    # -1 is a special signal meaning "admin lookup by is_admin flag"
+    if emp_id == -1:
+        emp = Employee.query.filter_by(is_admin=True, pin=pin).first()
+    else:
+        emp = Employee.query.filter_by(id=emp_id, pin=pin).first()
     if not emp:
         return jsonify({'error': 'פרטים שגויים. נסה שוב.'}), 401
     session['employee_id'] = emp.id
