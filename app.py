@@ -415,14 +415,14 @@ def setup_admin():
     """Temporary route to reset admin credentials"""
     admin = Employee.query.filter_by(is_admin=True).first()
     if admin:
-        admin.pin = '1234'
+        admin.pin = '1121'
         db.session.commit()
-        return jsonify({'status': 'Admin PIN reset to 1234', 'name': admin.name})
+        return jsonify({'status': 'Admin PIN reset to 1121', 'name': admin.name})
     else:
-        admin = Employee(name='Admin', pin='1234', is_admin=True)
+        admin = Employee(name='Admin', pin='1121', is_admin=True)
         db.session.add(admin)
         db.session.commit()
-        return jsonify({'status': 'Admin created with PIN 1234'})
+        return jsonify({'status': 'Admin created with PIN 1121'})
 
 
 if __name__ == '__main__':
