@@ -406,6 +406,21 @@ def admin_delete_client(client_id):
     return jsonify({'success': True})
 
 
+@app.route('/setup-admin')
+def setup_admin():
+    """Temporary route to reset admin credentials"""
+    admin = Employee.query.filter_by(is_admin=True).first()
+    if admin:
+        admin.pin = '1234'
+        db.session.commit()
+        return jsonify({'status': 'Admin PIN reset to 1234', 'name': admin.name})
+    else:
+        admin = Employee(name='Admin', pin='1234', is_admin=True)
+        db.session.add(admin)
+        db.session.commit()
+        return jsonify({'status': 'Admin created with PIN 1234'})
+
+
 if __name__ == '__main__':
     init_db()
     port = int(os.environ.get('PORT', 5000))
